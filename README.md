@@ -51,18 +51,7 @@ Features:
     Deep learning integration
     Solar charging system
     GPS-based navigation
-  Project Structure:
-    BANKAI-RoboDog/
-    │── code/
-    │   ├── esp32/
-    │   ├── arduino/
-    │── hardware/
-    │   ├── circuit_diagram/
-    │   ├── wiring/
-    │── 3d_models/
-    │── images/
-    │── docs/
-    │── README.md
+  
     
 
 
