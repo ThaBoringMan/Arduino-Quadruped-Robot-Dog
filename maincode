@@ -1,0 +1,158 @@
+#include <Servo.h>
+#define TRIG_PIN 22
+#define ECHO_PIN 24
+#define TRIG_PIN 25
+#define ECHO_PIN 30
+
+#define HC05_TX 18  // Arduino Mega TX1
+#define HC05_RX 19  // Arduino Mega RX1
+int headAngle = 90; // Start at front position (90 degrees)
+
+Servo fr_j, fr_a, fr_w;
+Servo br_j, br_a, br_w;
+Servo fl_j, fl_a, fl_w;
+Servo bl_j, bl_a, bl_w;
+Servo headServo;
+
+void stand() {
+  fl_j.write(92);   fr_j.write(92);
+  fl_a.write(114);  fr_a.write(71);
+  fl_w.write(100);  fr_w.write(78);
+
+  bl_j.write(98);   br_j.write(92);
+  bl_a.write(114);  br_a.write(66);
+  bl_w.write(111);  br_w.write(84); 
+}
+
+void sit() {
+  fl_j.write(92);   fr_j.write(92);
+  fl_a.write(180);  fr_a.write(0);
+  fl_w.write(0);    fr_w.write(180);
+
+  bl_j.write(98);   br_j.write(92);
+  bl_a.write(180);  br_a.write(0);
+  bl_w.write(0);    br_w.write(180);
+}
+
+void sit_stand() {
+  fr_j.write(95);
+  fl_j.write(80);
+  br_j.write(90);
+  bl_j.write(82);
+
+  fr_a.write(50);
+  fl_a.write(120);
+  br_a.write(0);
+  bl_a.write(180);
+
+  fr_w.write(70);
+  fl_w.write(110);
+  br_w.write(155);
+  bl_w.write(25);
+}
+
+void smoothStand() {
+  for (int i = 0; i <= 20; i++) { // 20 steps for smoother transition
+    fl_a.write(map(i, 0, 20, 180, 114));  fr_a.write(map(i, 0, 20, 0, 71));
+    fl_w.write(map(i, 0, 20, 0, 100));    fr_w.write(map(i, 0, 20, 180, 78));
+
+    bl_a.write(map(i, 0, 20, 180, 114));  br_a.write(map(i, 0, 20, 0, 66));
+    bl_w.write(map(i, 0, 20, 0, 111));    br_w.write(map(i, 0, 20, 180, 84));
+    
+    delay(50); // Adjusted for even smoother transition (slower)
+  }
+}
+
+void smoothSit() {
+  for (int i = 0; i <= 20; i++) { // 20 steps for smoother transition
+    fl_a.write(map(i, 0, 20, 114, 180));  fr_a.write(map(i, 0, 20, 71, 0));
+    fl_w.write(map(i, 0, 20, 100, 0));    fr_w.write(map(i, 0, 20, 78, 180));
+
+    bl_a.write(map(i, 0, 20, 114, 180));  br_a.write(map(i, 0, 20, 66, 0));
+    bl_w.write(map(i, 0, 20, 111, 0));    br_w.write(map(i, 0, 20, 84, 180));
+    
+    delay(50); // Adjusted for even smoother transition (slower)
+  }
+}
+
+void crawl() {
+  for (int i = 0; i <= 20; i++) { // 20 steps for smoother transition
+    // Move front legs forward with bigger range
+    fl_a.write(map(i, 0, 20, 180, 130));  br_a.write(map(i, 0, 20, 0, 40)); 
+    fl_w.write(map(i, 0, 20, 0, 20));    br_w.write(map(i, 0, 20, 180, 150));
+    
+    delay(50); // Adjust speed of movement
+
+    // Move back legs backward with bigger range
+    fr_a.write(map(i, 0, 20, 0, 40));   bl_a.write(map(i, 0, 20, 180, 130)); 
+    fr_w.write(map(i, 0, 20, 180, 150)); bl_w.write(map(i, 0, 20, 0, 20));
+    
+    delay(50); // Adjust speed of movement
+  }
+}
+
+void smoothHeadTransition(int targetAngle) {
+  int step = (targetAngle > headAngle) ? 1 : -1; // Determine direction
+
+  for (int i = headAngle; i != targetAngle; i += step) {
+    headServo.write(i);
+    delay(20); // Adjust for smoothness
+  }
+  headAngle = targetAngle; // Update the current angle
+}
+
+void setup() {
+//Serial.begin(9600);  // Debugging via Serial Monitor
+Serial1.begin(9600);      // Bluetooth communication
+headServo.attach(30);
+headServo.write(headAngle);
+
+
+fr_j.attach(2);
+fr_a.attach(3);
+fr_w.attach(4);
+br_j.attach(5);
+br_a.attach(6);
+br_w.attach(7);
+fl_j.attach(8);
+fl_a.attach(9);
+fl_w.attach(10);
+bl_j.attach(11);
+bl_a.attach(12);
+bl_w.attach(13);
+sit();
+delay(1000);
+
+ 
+
+
+}
+void loop() {
+if (Serial1.available()) { // Read Bluetooth input
+   char c = Serial1.read();
+
+    
+//Serial.println(cmd);
+    if (c == 'L') { // Camera Left
+      if (headAngle > 0) smoothHeadTransition(max(0, headAngle - 10));
+    } 
+    else if (c == 'R') { // Camera Right
+      if (headAngle < 180) smoothHeadTransition(min(180, headAngle + 10));
+    } 
+   
+    else if (c == 'F') { // Stand
+      smoothStand();
+    } 
+    else if (c == 'B') { // Sit
+      smoothSit();
+    } 
+    else if (c == 'W') { // Crawl Forward
+      crawl();
+    } 
+    else { 
+     // Serial.print("error");
+    }
+    
+   // Serial.println("Command Received: " + cmd);
+  }
+}
