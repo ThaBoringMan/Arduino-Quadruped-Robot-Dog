@@ -1,0 +1,21 @@
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+#define ESP32_RX 16
+#define ESP32_TX 17
+
+void setup()
+{
+  SerialBT.begin("BANKAI_ROBO_DOG");
+  Serial2.begin(9600, SERIAL_8N1, ESP32_RX, ESP32_TX);
+}
+
+void loop()
+{
+  if (SerialBT.available())
+  {
+    char command = SerialBT.read();
+    Serial2.write(command);
+  }
+}
